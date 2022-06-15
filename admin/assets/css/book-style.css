@@ -1,0 +1,9 @@
+.book {
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+  text-align: center;
+  min-height: 300px;
+  align-content: space-between;
+  justify-content: space-between;
+}
