@@ -47,17 +47,34 @@ class CptBookMain
 
     public function add_meta_box()
     {
+        add_meta_box("publisher_name", esc_html("Publisher", "cpt-book"), array($this, "publisher_name_html"), "book", 'advanced');
+
         add_meta_box("author_name", esc_html("Author", "cpt-book"), array($this, "author_name_html"), "book", 'advanced');
         add_meta_box("color_id", esc_html("Color", "cpt-book"), array($this, "color_html"), "book", 'advanced');
     }
 
     public function author_name_html($post)
-    { ?>
+    {
+
+?>
         <div class="row">
             <div class="label"><?php echo esc_html('Author name', 'cpt-book') ?></div>
             <div class="fields">
 
                 <input type="text" name="author_name" value="<?php echo esc_html(get_post_meta($post->ID, 'meta_author', true)) ?>" />
+            </div>
+        </div>
+
+    <?php }
+
+
+    function publisher_name_html($post)
+    { ?>
+        <div class="row">
+            <div class="label"><?php echo esc_html('Publisher name', 'cpt-book') ?></div>
+            <div class="fields">
+
+                <input type="text" name="publisher_name" value="<?php echo esc_html(get_post_meta($post->ID, 'meta_publisher', true)) ?>" />
             </div>
         </div>
 
@@ -101,10 +118,6 @@ class CptBookMain
     public function save_meta($post_id)
     {
 
-        if (isset($_POST["author_name"])) :
-            update_post_meta($post_id, 'meta_author', $_POST["author_name"]);
-        endif;
-
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
         }
@@ -116,7 +129,16 @@ class CptBookMain
             return;
         }
         $color_id = (isset($_POST['color_id']) && $_POST['color_id'] != '') ? $_POST['color_id'] : '';
-        update_post_meta($post_id, 'color_id', $color_id);
+
+        if (isset($_POST["author_name"]) && $color_id != '' && isset($_POST["publisher_name"])) :
+
+            $_POST["author_name"] = sanitize_text_field($_POST["author_name"]);
+            $_POST["publisher_name"] = sanitize_text_field($_POST["publisher_name"]);
+
+            update_post_meta($post_id, 'color_id', $color_id);
+            update_post_meta($post_id, 'meta_author', $_POST["author_name"]);
+            update_post_meta($post_id, 'meta_publisher', $_POST["publisher_name"]);
+        endif;
     }
 
 
@@ -137,11 +159,17 @@ class CptBookMain
         $the_query = new WP_Query($args);
 
         if ($the_query->have_posts()) :
-            while ($the_query->have_posts()) : $the_query->the_post(); ?>
-                <div class="book" style="background:<?php echo get_post_meta($post->ID,  'color_id', true);  ?>">
-                    <h3><?php the_title() ?></h3>
-                    <p><?php echo get_post_meta($post->ID,  'meta_author', true); ?></p>
-                </div>
+            while ($the_query->have_posts()) : $the_query->the_post();
+                $title = esc_html(get_the_title());
+                $color = esc_html(get_post_meta($post->ID,  'color_id', true));
+        ?>
+                <?php if (isset($title)) : ?>
+                    <div class="book" style="background:<?php echo $color;  ?>">
+                        <h3><?php echo $title; ?></h3>
+                        <p><?php esc_html_e((get_post_meta($post->ID,  'meta_author', true)), 'cpt-book'); ?></p>
+                        <p><?php esc_html_e((get_post_meta($post->ID,  'meta_publisher', true)), 'cpt-book'); ?></p>
+                    </div>
+                <?php endif; ?>
 <?php endwhile;
         endif;
 
